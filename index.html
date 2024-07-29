@@ -113,14 +113,14 @@
             console.log(event);
             if (event.which === 13) {
                 send(keybuffer);
-                keyBuffer = [];
+
+                while(keybuffer.length > 0) {
+                    keybuffer.pop();
+                }
                 return;
             }
-            var number = event.which - 48;
-            if (number < 0 || number > 9) {
-                return;
-            }
-            keybuffer.push(number);
+            
+            keybuffer.push(String.fromCharCode(number));
             document.getElementById('htmlConsole').textContent += number;
             
         }
