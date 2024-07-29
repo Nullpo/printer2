@@ -103,9 +103,18 @@
 
         var keybuffer = [];
 
+        function send(value) {
+            document.getElementById('htmlConsole').textContent += `
+            Scanned: ${value}
+            `
+        }
+
         function press(event) {
+            console.log(event);
             if (event.which === 13) {
-                return send();
+                send(keybuffer);
+                keyBuffer = [];
+                return;
             }
             var number = event.which - 48;
             if (number < 0 || number > 9) {
@@ -113,10 +122,10 @@
             }
             keybuffer.push(number);
 
-            document.getElementById('htmlConsole').textContent = keybuffer
+            
         }
 
-        $(document).on("keypress", press);
+        document.onkeypress = press;
 
 
         /*
@@ -192,7 +201,7 @@
     <div>
         <code>
             <pre id="htmlConsole">
-                Consola impresora + scanner
+                Consola impresora + scanner.
             </pre>
         </code>
     </div>
