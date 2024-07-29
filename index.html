@@ -66,9 +66,9 @@
         console.log("Services", services);
 
         document.getElementById('htmlConsole').textContent += 
-        JSON.stringify(services) + `
+        services.map(e => `${e.device.name} - gatt uuid: ${e.uuid} - isPrimary: ${e.isPrimary}
         ---------------------------------------
-        `
+        `).join('')
 
     }
 
