@@ -1,9 +1,9 @@
 <html>
 
 <head>
-<script>
-    var encoder = new TextEncoder("utf-8");
-    var zpl = `^XA
+    <script>
+        var encoder = new TextEncoder("utf-8");
+        var zpl = `^XA
 ^CI28
 ^FWN
 ^CFA,60
@@ -27,141 +27,161 @@
 ^FO155,540^FD1030000007685^FS
 ^XZ
 `
-    var zplEncoded = encoder.encode(zpl + '\u000A\u000D')
+        var zplEncoded = encoder.encode(zpl + '\u000A\u000D')
 
-    var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-    var perChunk = 512
+        var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        var perChunk = 512
 
-    var zplInBatches = zplEncoded.reduce((all, one, i) => {
-        const ch = Math.floor(i / perChunk);
-        all[ch] = [].concat((all[ch] || []), one);
-        return all
-    }, []).map(
-        e => {
-            return new Uint8Array(e)
-        }
-    )
+        var zplInBatches = zplEncoded.reduce((all, one, i) => {
+            const ch = Math.floor(i / perChunk);
+            all[ch] = [].concat((all[ch] || []), one);
+            return all
+        }, []).map(
+            e => {
+                return new Uint8Array(e)
+            }
+        )
 
-    let device;
-    let server;
-    let services;
+        let device;
+        let server;
+        let services;
 
 
-    async function connect() {
-        const serviceUUID = 'e7810a71-73ae-499d-8c15-faa9aef0c3f2';
-        const options = {
+        async function connect() {
+            const serviceUUID = 'e7810a71-73ae-499d-8c15-faa9aef0c3f2';
+            const options = {
                 filters: [{ name: 'K329_17FF' }],
                 optionalServices: [
                     serviceUUID
                 ]
-                    //  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'
-                    //`0000180a-0000-1000-8000-00805f9b34fb, 000018f0-0000-1000-8000-00805f9b34fb, 0000fff0-0000-1000-8000-00805f9b34fb, 49535343-fe7d-4ae5-8fa9-9fafd205e455, e7810a71-73ae-499d-8c15-faa9aef0c3f2`.replaceAll(/\s/g, '').split(',')
+                //  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'
+                //`0000180a-0000-1000-8000-00805f9b34fb, 000018f0-0000-1000-8000-00805f9b34fb, 0000fff0-0000-1000-8000-00805f9b34fb, 49535343-fe7d-4ae5-8fa9-9fafd205e455, e7810a71-73ae-499d-8c15-faa9aef0c3f2`.replaceAll(/\s/g, '').split(',')
             };
-        
-        device = await navigator.bluetooth.requestDevice(options);
-        server = await device.gatt.connect();
-        console.log('Connected to', device.name);
 
-        services = await server.getPrimaryServices(serviceUUID);
-        console.log("Services", services);
+            device = await navigator.bluetooth.requestDevice(options);
+            server = await device.gatt.connect();
+            console.log('Connected to', device.name);
 
-        document.getElementById('htmlConsole').textContent += 
-        services.map(e => `${e.device.name} - gatt uuid: ${e.uuid} - isPrimary: ${e.isPrimary}
+            services = await server.getPrimaryServices(serviceUUID);
+            console.log("Services", services);
+
+            document.getElementById('htmlConsole').textContent +=
+                services.map(e => `${e.device.name} - gatt uuid: ${e.uuid} - isPrimary: ${e.isPrimary}
         ---------------------------------------
         `).join('')
 
-    }
-
-    async function printUsingWriteValue() {
-        for (const service of services) {
-            console.log(`Service: ${service.uuid}`);
-            const characteristics = await service.getCharacteristics();
-            for (const characteristic of characteristics) {
-                if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
-                    console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
-                    await characteristic.writeValue(zplEncoded);
-                    console.log(`Printed in ${characteristic.uuid}`)
-                }
-            }
         }
-    }
 
-    async function printUsingWriteValueWithResponse() {
-        for (const service of services) {
-            console.log(`Service: ${service.uuid}`);
-            const characteristics = await service.getCharacteristics();
-            for (const characteristic of characteristics) {
-                if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
-                    console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
-                    await characteristic.writeValueWithResponse(zplEncoded);
-                    console.log(`Printed in ${characteristic.uuid}`)
-                }
-            }
-        }
-    }
-
-
-    async function connectToPrinter() {
-        try {
-            const options = {
-                filters: [{ name: 'K329_17FF' }],
-                optionalServices: [
-                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
-                ]
-                    //  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'
-                    //`0000180a-0000-1000-8000-00805f9b34fb, 000018f0-0000-1000-8000-00805f9b34fb, 0000fff0-0000-1000-8000-00805f9b34fb, 49535343-fe7d-4ae5-8fa9-9fafd205e455, e7810a71-73ae-499d-8c15-faa9aef0c3f2`.replaceAll(/\s/g, '').split(',')
-            };
-
-            const device = await navigator.bluetooth.requestDevice(options);
-            const server = await device.gatt.connect();
-
-            console.log('Connected to', device.name);
-
-            const services = await server.getPrimaryServices();
+        async function printUsingWriteValue() {
             for (const service of services) {
                 console.log(`Service: ${service.uuid}`);
-
                 const characteristics = await service.getCharacteristics();
                 for (const characteristic of characteristics) {
-                    console.log(`Characteristic: ${characteristic.uuid}`);
-
-                    // Listen
-                    if (characteristic.properties.notify) {
-                        characteristic.addEventListener(
-                            "characteristicvaluechanged",
-                            async (event) => {
-                                console.log(`Received heart rate measurement: ${event.target.value}`);
-                            },
-                        );
-                        await characteristic.startNotifications();
-                    }
-
-                    // Write
-
                     if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
-                        console.log("characteristic", characteristic)
-                        //let encoder = new TextEncoder("utf-8");
-                        // Add line feed + carriage return chars to text
-
-
-                        await zplInBatches.reduce((prom, batch) => {
-                            return prom
-                                .then(() => characteristic.writeValue(batch))
-                                .then(v => console.log('Sent', batch, v))
-                        }, Promise.resolve())
-                            .then(v => console.log('Sent all', v))
-                            .catch(e => console.error("writeValueWithResponse", e))
+                        console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
+                        await characteristic.writeValue(zplEncoded);
+                        console.log(`Printed in ${characteristic.uuid}`)
                     }
-
                 }
             }
-        } catch (error) {
-            console.error('Error:', error);
         }
-    }
 
-</script>
+        async function printUsingWriteValueWithResponse() {
+            for (const service of services) {
+                console.log(`Service: ${service.uuid}`);
+                const characteristics = await service.getCharacteristics();
+                for (const characteristic of characteristics) {
+                    if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                        console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
+                        await characteristic.writeValueWithResponse(zplEncoded);
+                        console.log(`Printed in ${characteristic.uuid}`)
+                    }
+                }
+            }
+        }
+
+
+        var keybuffer = [];
+
+        function press(event) {
+            if (event.which === 13) {
+                return send();
+            }
+            var number = event.which - 48;
+            if (number < 0 || number > 9) {
+                return;
+            }
+            keybuffer.push(number);
+
+            document.getElementById('htmlConsole').textContent = keybuffer
+        }
+
+        $(document).on("keypress", press);
+
+
+        /*
+            async function connectToPrinter() {
+                try {
+                    const options = {
+                        filters: [{ name: 'K329_17FF' }],
+                        optionalServices: [
+                            'e7810a71-73ae-499d-8c15-faa9aef0c3f2'
+                        ]
+                            //  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'
+                            //`0000180a-0000-1000-8000-00805f9b34fb, 000018f0-0000-1000-8000-00805f9b34fb, 0000fff0-0000-1000-8000-00805f9b34fb, 49535343-fe7d-4ae5-8fa9-9fafd205e455, e7810a71-73ae-499d-8c15-faa9aef0c3f2`.replaceAll(/\s/g, '').split(',')
+                    };
+        
+                    const device = await navigator.bluetooth.requestDevice(options);
+                    const server = await device.gatt.connect();
+        
+                    console.log('Connected to', device.name);
+        
+                    const services = await server.getPrimaryServices();
+                    for (const service of services) {
+                        console.log(`Service: ${service.uuid}`);
+        
+                        const characteristics = await service.getCharacteristics();
+                        for (const characteristic of characteristics) {
+                            console.log(`Characteristic: ${characteristic.uuid}`);
+        
+                            // Listen
+                            if (characteristic.properties.notify) {
+                                characteristic.addEventListener(
+                                    "characteristicvaluechanged",
+                                    async (event) => {
+                                        console.log(`Received heart rate measurement: ${event.target.value}`);
+                                    },
+                                );
+                                await characteristic.startNotifications();
+                            }
+        
+                            // Write
+        
+                            if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                                console.log("characteristic", characteristic)
+                                //let encoder = new TextEncoder("utf-8");
+                                // Add line feed + carriage return chars to text
+        
+        
+                                await zplInBatches.reduce((prom, batch) => {
+                                    return prom
+                                        .then(() => characteristic.writeValue(batch))
+                                        .then(v => console.log('Sent', batch, v))
+                                }, Promise.resolve())
+                                    .then(v => console.log('Sent all', v))
+                                    .catch(e => console.error("writeValueWithResponse", e))
+                            }
+        
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }*/
+
+    </script>
 </head>
+
 <body>
     <button onclick="connect()">Conectar</button>
 
@@ -172,7 +192,7 @@
     <div>
         <code>
             <pre id="htmlConsole">
-                Consola
+                Consola impresora + scanner
             </pre>
         </code>
     </div>
