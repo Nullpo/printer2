@@ -79,7 +79,7 @@
             for (const characteristic of characteristics) {
                 if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
                     console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
-                    await characteristic.writeValue(batch);
+                    await characteristic.writeValue(zplEncoded);
                     console.log(`Printed in ${characteristic.uuid}`)
                 }
             }
@@ -93,7 +93,7 @@
             for (const characteristic of characteristics) {
                 if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
                     console.log(`Characteristic: ${characteristic.uuid}`, characteristic.properties);
-                    await characteristic.writeValueWithResponse(batch);
+                    await characteristic.writeValueWithResponse(zplEncoded);
                     console.log(`Printed in ${characteristic.uuid}`)
                 }
             }
