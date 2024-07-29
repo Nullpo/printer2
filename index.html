@@ -110,6 +110,7 @@
         }
 
         function press(event) {
+            document.activeElement.blur()
             console.log(event);
             if (event.which === 13) {
                 send(keybuffer);
