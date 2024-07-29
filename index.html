@@ -1,0 +1,130 @@
+<html>
+
+<head>
+
+</head>
+<script>
+    var encoder = new TextEncoder("utf-8");
+    var zpl = `^XA
+^CI28
+^FWN
+^CFA,60
+^FO25,40^GB90,90,10^FS
+^FO52,60^FD1^FS
+^CF0,36
+^FO145,50^FDOrden:^FS
+^FO145,90^FD104923-mx^FS
+
+^FO30,180^FDUbicacion:^FS
+^FO535,180,1^FDCierre:^FS
+^FO25,310^FDFecha:^FS
+^FO535,310,1^FDSlot:^FS
+^FO140,310^FDmartes^FS
+^FO25,220^FDL0003^FS
+^FO530,220,1^FD20:00 ^FS
+^FO25,350^FD02/07^FS
+^FO530,350,1^FD21:00 ^FS
+^BY3,3,100
+^FO25,435^BCN,100,N,N,N,N^FD1030000007685^FS
+^FO155,540^FD1030000007685^FS
+^XZ
+`
+    var zplEncoded = encoder.encode(zpl + '\u000A\u000D')
+
+    var arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    var perChunk = 512
+
+    var zplInBatches = zplEncoded.reduce((all, one, i) => {
+        const ch = Math.floor(i / perChunk);
+        all[ch] = [].concat((all[ch] || []), one);
+        return all
+    }, []).map(
+        e => {
+            debugger;
+            return new Uint8Array(e)
+        }
+    )
+
+
+
+    async function connectToPrinter() {
+        try {
+            const options = {
+                filters: [{ name: 'K329_17FF' }],
+                optionalServices:
+                    //  'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f'
+                    `0000180a-0000-1000-8000-00805f9b34fb, 000018f0-0000-1000-8000-00805f9b34fb, 0000fff0-0000-1000-8000-00805f9b34fb, 49535343-fe7d-4ae5-8fa9-9fafd205e455, e7810a71-73ae-499d-8c15-faa9aef0c3f2`.replaceAll(/\s/g, '').split(',')
+            };
+
+            const device = await navigator.bluetooth.requestDevice(options);
+            const server = await device.gatt.connect();
+
+            console.log('Connected to', device.name);
+
+            const services = await server.getPrimaryServices();
+            for (const service of services) {
+                console.log(`Service: ${service.uuid}`);
+
+                const characteristics = await service.getCharacteristics();
+                for (const characteristic of characteristics) {
+                    console.log(`Characteristic: ${characteristic.uuid}`);
+
+                    // Listen
+                    if (characteristic.properties.notify) {
+                        characteristic.addEventListener(
+                            "characteristicvaluechanged",
+                            async (event) => {
+                                console.log(`Received heart rate measurement: ${event.target.value}`);
+                            },
+                        );
+                        await characteristic.startNotifications();
+                    }
+
+                    // Write
+
+                    if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+                        console.log("characteristic", characteristic)
+                        //let encoder = new TextEncoder("utf-8");
+                        // Add line feed + carriage return chars to text
+
+
+                        await zplInBatches.reduce((prom, batch) => {
+                            return prom
+                                .then(() => characteristic.writeValue(batch))
+                                .then(v => console.log('Sent', batch, v))
+                        }, Promise.resolve())
+                            .then(v => console.log('Sent all', v))
+                            .catch(e => console.error("writeValueWithResponse", e))
+
+
+                        /*await characteristic.writeValue(text).then((x) => {
+                            console.log('Write done.', x);
+                        }).catch(e => console.error("writeValueWithResponse", e));*/
+
+
+
+
+                        /*
+                        await characteristic.writeValueWithResponse(text).then((x) => {
+                            console.log('Write done.', x);
+                        }).catch(e => console.error("writeValueWithResponse", e));
+            
+                        await characteristic.writeValueWithoutResponse(text).then((x) => {
+                            console.log('Write done.', x);
+                        }).catch(e => console.error("writeValueWithoutResponse", e));*/
+                    }
+
+                }
+            }
+        } catch (error) {
+            console.log('Error:', error);
+        }
+    }
+
+</script>
+
+<body>
+    <button>Conectar e imprimir</button>
+</body>
+
+</html>
